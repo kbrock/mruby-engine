@@ -44,7 +44,8 @@ static void ext_mruby_engine_check_initialized(struct me_mruby_engine *self, con
 }
 
 
-static void ext_mruby_engine_free(struct me_mruby_engine *engine) {
+static void ext_mruby_engine_free(void *data) {
+  struct me_mruby_engine *engine = data;
   if (!engine)
     return;
 
@@ -53,7 +54,18 @@ static void ext_mruby_engine_free(struct me_mruby_engine *engine) {
   me_memory_pool_destroy(allocator);
 }
 
-static void ext_iseq_free(struct me_iseq *iseq) {
+static const rb_data_type_t ext_mruby_engine_type = {
+  .wrap_struct_name = "MRubyEngine",
+  .function = {
+    .dmark = NULL,
+    .dfree = ext_mruby_engine_free,
+  },
+  .data = NULL,
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED,
+};
+
+static void ext_iseq_free(void *data) {
+  struct me_iseq *iseq = data;
   if (!iseq) {
     return;
   }
@@ -61,12 +73,22 @@ static void ext_iseq_free(struct me_iseq *iseq) {
   me_iseq_destroy(iseq);
 }
 
+static const rb_data_type_t ext_iseq_type = {
+  .wrap_struct_name = "MRubyEngine::InstructionSequence",
+  .function = {
+    .dmark = NULL,
+    .dfree = ext_iseq_free,
+  },
+  .data = NULL,
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY | RUBY_TYPED_WB_PROTECTED,
+};
+
 static VALUE ext_mruby_engine_alloc(VALUE class) {
-  return Data_Wrap_Struct(class, NULL, ext_mruby_engine_free, NULL);
+  return TypedData_Wrap_Struct(class, &ext_mruby_engine_type, NULL);
 }
 
 static VALUE ext_iseq_alloc(VALUE class) {
-  return Data_Wrap_Struct(class, NULL, ext_iseq_free, NULL);
+  return TypedData_Wrap_Struct(class, &ext_iseq_type, NULL);
 }
 
 static void check_quota_error_raised(struct me_mruby_engine  *self) {
@@ -126,7 +148,7 @@ static void check_iseq_dump_err(struct me_iseq_err *err) {
 }
 
 static VALUE ext_mruby_engine_initialize(int argc, VALUE *argv, VALUE rself) {
-  ext_mruby_engine_free(DATA_PTR(rself));
+  ext_mruby_engine_free(RTYPEDDATA_DATA(rself));
 
   VALUE rcapacity;
   VALUE r_instruction_quota;
@@ -168,19 +190,19 @@ static VALUE ext_mruby_engine_initialize(int argc, VALUE *argv, VALUE rself) {
     me_host_raise(exception);
   }
 
-  DATA_PTR(rself) = engine;
+  RTYPEDDATA_DATA(rself) = engine;
   return Qnil;
 }
 
 static inline struct me_mruby_engine *ext_mruby_engine_unwrap(VALUE rengine) {
   struct me_mruby_engine *engine;
-  Data_Get_Struct(rengine, struct me_mruby_engine, engine);
+  TypedData_Get_Struct(rengine, struct me_mruby_engine, &ext_mruby_engine_type, engine);
   return engine;
 }
 
 static inline struct me_iseq *ext_iseq_unwrap(VALUE riseq) {
   struct me_iseq *iseq;
-  Data_Get_Struct(riseq, struct me_iseq, iseq);
+  TypedData_Get_Struct(riseq, struct me_iseq, &ext_iseq_type, iseq);
   return iseq;
 }
 
@@ -337,7 +359,7 @@ static VALUE ext_iseq_initialize(VALUE rself, VALUE rsources) {
   me_memory_pool_destroy(allocator);
   check_iseq_dump_err(&err);
 
-  DATA_PTR(rself) = iseq;
+  RTYPEDDATA_DATA(rself) = iseq;
   return Qnil;
 }
 
