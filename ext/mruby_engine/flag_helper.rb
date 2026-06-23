@@ -22,7 +22,6 @@ module Flags
         MRB_INT64
         MRB_UTF8_STRING
         MRB_WORD_BOXING
-        YYDEBUG
       )
       defines << "_GNU_SOURCE" if RUBY_PLATFORM =~ /linux/
       defines

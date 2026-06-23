@@ -120,7 +120,7 @@ RSpec.describe MRubyEngine do
   it "raises on a syntax error" do
     expect {
       engine.sandbox_eval("syntax_error.rb", "(")
-    }.to raise_error(MRubyEngine::EngineSyntaxError, "syntax_error.rb:1:1: syntax error")
+    }.to raise_error(MRubyEngine::EngineSyntaxError, /syntax_error\.rb:1:1: syntax error/)
   end
 
   it "raises if script raised an error" do
@@ -524,7 +524,7 @@ RSpec.describe MRubyEngine do
     it "reports syntax errors" do
       expect do
         MRubyEngine::InstructionSequence.new([["sample.rb", "("]])
-      end.to raise_error(MRubyEngine::EngineSyntaxError, "sample.rb:1:1: syntax error")
+      end.to raise_error(MRubyEngine::EngineSyntaxError, /sample\.rb:1:1: syntax error/)
     end
 
     it "reports syntax error with multiple files" do
@@ -532,7 +532,7 @@ RSpec.describe MRubyEngine do
         MRubyEngine::InstructionSequence.new(
           [["sample.rb", "a = 1"], ["sample_2.rb", "("]],
         )
-      end.to raise_error(MRubyEngine::EngineSyntaxError, "sample_2.rb:1:1: syntax error")
+      end.to raise_error(MRubyEngine::EngineSyntaxError, /sample_2\.rb:1:1: syntax error/)
     end
   end
 end
