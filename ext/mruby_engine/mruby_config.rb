@@ -24,8 +24,6 @@ MRuby::Build.new do |conf|
   conf.gem core: 'mruby-bin-mirb'
   conf.gem core: 'mruby-bin-mruby'
 
-  conf.bins = ['mrbc', 'mruby']
-
   conf.cc do |cc|
     cc.flags += %w(-fPIC)
     cc.flags += Flags.cflags
@@ -44,8 +42,6 @@ MRuby::CrossBuild.new('sandbox') do |conf|
   enable_debug
 
   conf.gembox mruby_engine_gembox_path
-
-  conf.bins = []
 
   conf.cc do |cc|
     cc.flags += %w(-fPIC)
